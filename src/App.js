@@ -1,12 +1,10 @@
-import { useState } from "react";
-
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
+import React, { Component } from "react";
+import TabsComponent from "./components/Tabs";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-
-import User from "../src/components/User";
+import initialUsers from "./user.json";
+import UserList from "../src/components/UserList";
+import Filter from "./components/Filter/Filter";
+import FilteredUser from "./components/Filter/FilteredUser";
 import "./App.css";
 
 const theme = createTheme({
@@ -27,119 +25,55 @@ const theme = createTheme({
     },
   },
 });
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
 
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`full-width-tabpanel-${index}`}
-      aria-labelledby={`full-width-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ div: 2 }}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-}
-function a11yProps(index) {
-  return {
-    id: `full-width-tab-${index}`,
-    "aria-controls": `full-width-tabpanel-${index}`,
+class App extends Component {
+  state = {
+    users: initialUsers,
+    filter: "",
   };
-}
 
-function App() {
-  const [value, setValue] = useState(0);
-
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
+  toggleSubscriber = (userId) => {
+    console.log(userId);
+    this.setState((prevState) => ({
+      users: prevState.users.map((user) => {
+        if (user.id === userId) {
+          return {
+            ...user,
+            status: !user.status,
+          };
+        }
+        return user;
+      }),
+    }));
   };
-  return (
-    <div className="App">
+
+  onChangeFilter = (event) => {
+    this.setState({ filter: event.currentTarget.value });
+  };
+  render() {
+    const { users, filter } = this.state;
+    const normalizedFilter = filter.toLowerCase();
+
+    const filterUser = users.filter((user) => {
+      return user.name.toLowerCase().includes(normalizedFilter);
+    });
+
+    return (
       <ThemeProvider theme={theme}>
-        <Box
-          sx={{
-            width: "100%",
-            minWidth: 360,
-            borderBottom: 1,
-            borderColor: "divider",
-          }}
-        >
-          <Tabs
-            value={value}
-            onChange={handleChange}
-            // sx={{
-            //   color: "primary",
-            // }}
-            variant="fullWidth"
-            aria-label="full width tabs example"
-            textColor="secondary"
-            indicatorColor="secondary"
-          >
-            <Tab
-              label="83 Followers"
-              {...a11yProps(0)}
-              sx={{
-                color: "#000",
-                fontWeight: "400",
-                letterSpacing: "0px",
-                textTransform: "none",
-                padding: 0,
-
-                fontSize: {
-                  mobile: "16px",
-                  tablet: "18px",
-                  laptop: "14px",
-                },
-                lineHeight: {
-                  mobile: "43px",
-                  laptop: "13px",
-                },
-                maxWidth: {
-                  laptop: "108px",
-                },
-              }}
-            />
-            <Tab
-              label="4389 Following"
-              {...a11yProps(1)}
-              sx={{
-                fontWeight: "400",
-                letterSpacing: "0px",
-                textTransform: "none",
-                padding: 0,
-                color: "#000",
-
-                fontSize: {
-                  mobile: "16px",
-                  tablet: "18px",
-                  laptop: "14px",
-                },
-                lineHeight: {
-                  mobile: "43px",
-                  laptop: "13px",
-                },
-                maxWidth: {
-                  laptop: "108px",
-                },
-              }}
-            />
-          </Tabs>
-        </Box>
-        <TabPanel value={value} index={0}>
-          <User />
-        </TabPanel>
-        <TabPanel value={value} index={1}>
-          <User />
-        </TabPanel>
+        <Filter value={filter} onChange={this.onChangeFilter} />
+        {filterUser.length !== 0 && filterUser.length < 3 ? (
+          <FilteredUser
+            users={filterUser}
+            onToggleSubscriber={this.toggleSubscriber}
+          />
+        ) : (
+          ""
+        )}
+        <TabsComponent>
+          <UserList users={users} onToggleSubscriber={this.toggleSubscriber} />
+        </TabsComponent>
       </ThemeProvider>
-    </div>
-  );
+    );
+  }
 }
-
 export default App;
